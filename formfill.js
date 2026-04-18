@@ -57,7 +57,7 @@
   mappings.push({
     scope: document,
     labels: ["additional comments", "comments", "additional information", "explanation"],
-    value: buildCommentsText({ meta, description, pdfFilename }),
+    value: buildCommentsText({ meta }),
     prefer: "textarea",
   });
 
@@ -164,19 +164,37 @@
 
   // ——— helpers ———
 
-  function buildCommentsText({ meta, description, pdfFilename }) {
-    const lines = [
-      `Job posting URL: ${meta.url}`,
-      `Captured: ${meta.timestamp}`,
-    ];
-    if (meta.jobTitle) lines.push(`Job title: ${meta.jobTitle}`);
-    if (meta.companyName) lines.push(`Employer: ${meta.companyName}`);
-    if (meta.location) lines.push(`Listed location: ${meta.location}`);
-    if (pdfFilename) lines.push(`Evidence file: ${pdfFilename}`);
-    lines.push("");
-    lines.push("--- Job description excerpt ---");
-    lines.push(description || "(see attached PDF for full posting)");
-    return lines.join("\n");
+  function buildCommentsText({ meta }) {
+    // The DOL "additional information" field rejects colons (and likely
+    // a few other punctuation chars). We keep the URL but strip its
+    // "https://" prefix to drop the offending colon. The job-description
+    // excerpt is intentionally omitted because postings commonly include
+    // arrows, bullets, trademark symbols, and other special characters
+    // that would trigger the validator. The attached PDF covers it.
+    const lines = [];
+    if (meta.jobTitle) lines.push(`Job title ${meta.jobTitle}`);
+    if (meta.companyName) lines.push(`Employer ${meta.companyName}`);
+    if (meta.location) lines.push(`Listed location ${meta.location}`);
+    if (meta.url) {
+      const bareUrl = meta.url.replace(/^https?:\/\//i, "");
+      lines.push(`Source ${bareUrl}`);
+    }
+    lines.push(
+      "The attached PDF contains the full job posting with its URL and capture timestamp"
+    );
+    return sanitizeForDolComments(lines.join("\n"));
+  }
+
+  function sanitizeForDolComments(text) {
+    // Whitelist: letters, digits, whitespace, dots, slashes. Everything
+    // else becomes a space. Conservative but defensible — the job posting's
+    // full text (with all its punctuation intact) is in the attached PDF.
+    return String(text || "")
+      .replace(/[^A-Za-z0-9\s./]/g, " ")
+      .replace(/[ \t]+/g, " ")
+      .replace(/ *\n */g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
 
   function fillInputByName(name, optionText) {
