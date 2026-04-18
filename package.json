@@ -4,7 +4,8 @@
   "description": "NYS Pay Transparency Reporter — Chrome extension.",
   "private": true,
   "scripts": {
-    "sync-lib": "cp node_modules/jspdf/dist/jspdf.umd.min.js ./jspdf.umd.min.js && cp node_modules/html2canvas/dist/html2canvas.min.js ./html2canvas.min.js",
+    "sync-lib": "mkdir -p vendor && cp node_modules/jspdf/dist/jspdf.umd.min.js vendor/jspdf.umd.min.js && cp node_modules/html2canvas/dist/html2canvas.min.js vendor/html2canvas.min.js",
+    "build-icons": "node scripts/build-icons.mjs",
     "postinstall": "npm run sync-lib"
   },
   "repository": {
@@ -22,5 +23,8 @@
   "dependencies": {
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
   }
 }

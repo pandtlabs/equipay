@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="22" fill="#1a4dba"/>
+  <!-- Letter shapes as paths so rasterization doesn't depend on fonts -->
+  <!-- "e" -->
+  <path fill="white" d="M38 46 Q26 46 26 62 Q26 80 38 80 Q46 80 50 74 L46 70 Q44 74 38 74 Q34 74 32 70 L50 70 Q51 66 51 62 Q51 46 38 46 Z M32 60 Q33 52 38 52 Q43 52 44 60 Z"/>
+  <!-- "P" -->
+  <path fill="white" d="M60 38 L60 86 L68 86 L68 72 L76 72 Q90 72 90 55 Q90 38 76 38 Z M68 46 L76 46 Q82 46 82 55 Q82 64 76 64 L68 64 Z"/>
+</svg>

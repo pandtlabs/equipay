@@ -9,7 +9,7 @@ chrome.action.onClicked.addListener(async (tab) => {
   try {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ["jspdf.umd.min.js", "html2canvas.min.js", "content.js"],
+      files: ["vendor/jspdf.umd.min.js", "vendor/html2canvas.min.js", "content.js"],
     });
   } catch (err) {
     console.error("equiPay: failed to inject capture scripts", err);

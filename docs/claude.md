@@ -59,9 +59,12 @@ MIT License
 | `content.js` | Parser registry, DOM expansion, html2canvas capture, jsPDF composition |
 | `formfill.js` | JSF name-based field fill, file-upload attempt, review panel |
 | `options.html` / `options.js` | Claimant profile editor |
-| `jspdf.umd.min.js` | 3rd-party PDF engine (vendored from `jspdf`) |
-| `html2canvas.min.js` | 3rd-party DOM-to-canvas rasterizer (vendored from `html2canvas`) |
-| `package.json` | npm deps + `sync-lib` script that refreshes the vendored bundles |
+| `icons/icon-{16,48,128}.png` + `icon.svg` | Toolbar + Web Store icons (generated via `npm run build-icons`) |
+| `vendor/jspdf.umd.min.js` | 3rd-party PDF engine (vendored from `jspdf`) |
+| `vendor/html2canvas.min.js` | 3rd-party DOM-to-canvas rasterizer (vendored from `html2canvas`) |
+| `scripts/build-icons.mjs` | Build-time rasterizer for the icon SVG |
+| `docs/claude.md`, `docs/STORE_LISTING.md` | Maintainer design notes + Web Store submission copy |
+| `package.json` | npm deps + `sync-lib` + `build-icons` scripts |
 
 ## Permissions
 

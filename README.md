@@ -42,7 +42,7 @@ Then:
 
 ## Architecture
 
-See [claude.md](claude.md) for the full design notes. TL;DR:
+See [docs/claude.md](docs/claude.md) for the full design notes. TL;DR:
 
 - **Manifest V3** service worker handles clicks and routes messages.
 - **Capture** uses `html2canvas` on the job-description element directly (not the viewport), after temporarily neutralizing `overflow` / `height` on scroll ancestors so the full content is in the natural document flow.
