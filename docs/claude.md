@@ -12,7 +12,7 @@ MIT License
 3. The rasterized PNG is composed into a PDF via `jsPDF`: a metadata header (URL, timestamp, employer, job title, listed location) followed by the screenshot paginated across letter-sized pages.
 4. The PDF is saved to the user's Downloads folder (`NYS_Violation_[Company].pdf`) and kept as a base64 data URL so it can be reused later for auto-upload.
 5. `content.js` messages `background.js` with the extracted metadata + the PDF data URL. The service worker stashes everything in `chrome.storage.local` and opens a new tab to the NYS DOL complaint form.
-6. On that tab's `status: complete`, `background.js` injects `formfill.js`. The form-fill script reads the capture data + the user's stored profile, answers the form via direct JSF `name`-attribute targeting, attempts to inject the PDF via `DataTransfer` on the file input, and renders a dismissable review panel that lists the §194-b requirements, links to the statute, and provides NY DOS + web-search helpers for the business-address lookup (which is deliberately left manual).
+6. On that tab's `status: complete`, `background.js` injects the bundled `dist/formfill.js`. The orchestrator picks a state adapter by `window.location.host`, loads the capture data + user profile from storage, runs the adapter's declared text-field / radio / explanation / upload / comments mappings against the DOM, and renders a dismissable review panel built from the adapter's `reviewPanel` config (requirements checklist, law links, business-address lookup helpers).
 
 ## Architecture & Technical Decisions
 
@@ -22,7 +22,7 @@ MIT License
 
 ### Activation model
 - `activeTab` + toolbar-icon click is the only way the capture pipeline starts on a job-board page. This keeps the extension silent on every other page and avoids requiring broad host permissions for each board.
-- `https://apps.labor.ny.gov/*` is declared in `host_permissions` because the DOL form tab is opened programmatically by the service worker and needs permission to have `formfill.js` injected without a user click.
+- `https://apps.labor.ny.gov/*` is declared in `host_permissions` because the DOL form tab is opened programmatically by the service worker and needs permission to have the form-fill bundle injected without a user click. Additional states' host patterns get added here when new adapters are registered.
 
 ### Evidence capture (`content.js`)
 - A **pluggable parser registry** selects extractors by URL. Each parser returns `{ jdContainer, companyName, jobTitle, location, url? }`. A generic heuristic fallback handles unknown sites (main/article/largest text block; `og:site_name` / `og:title` for metadata).
@@ -34,12 +34,17 @@ MIT License
 ### LinkedIn URL normalization
 - LinkedIn postings accumulate long query strings (`currentJobId`, tracking origin, keywords, etc.). The LinkedIn parser emits a canonical `https://www.linkedin.com/jobs/view/{id}/` URL for use in the PDF header and complaint form, keeping the evidence clean.
 
-### Form-fill (`formfill.js`)
-- **JSF `name`-based targeting** — the NYS DOL form's JSF component IDs are generated per render (`form:j_id_42` etc.) but the underlying `name` attributes on radios/checkboxes are stable (`typeComplainantSel`, `chooseFormA`, `rangeOfPay`, `typeAd`, etc.). `formfill.js` targets inputs by name + option text, avoiding the keyword-scope heuristics that earlier iterations used.
-- **Text fields** are filled by label-text matching (scoped by section heading) — the names of text inputs are less stable but labels like "First Name" / "Business Name" are.
-- **Conditional explanations** — after a "No" radio selection, JSF reveals a "please explain" textarea. `fillExplanationNearInput` walks up from the anchoring radio looking for the newly-visible textarea and populates it with a standard explanation.
-- **File upload** — `formfill.js` attempts to set `input[type=file].files` via `DataTransfer`. If the form accepts it (still-set after a 1.5s settle), great. If JSF silently rejects, we fall back to highlighting the file input and prompting the user to drag the PDF in.
-- **Review panel** — a fixed-position, dismissable panel in the bottom-right of the DOL tab that shows: §194-b requirements checklist, file-upload status, business-address lookup helpers (NY DOS public inquiry + web search + re-open posting), and links to the NY DOL Pay Transparency overview + the §194-b statute text. This is the intentional human-in-the-loop step: the extension will not (and should not) submit the complaint, and the panel exists to discourage misuse.
+### Form-fill (`formfill/` → `dist/formfill.js`)
+- **State-adapter registry.** `formfill/adapters/` contains one file per supported state. Each adapter exports a pure JSON-shaped config (no functions) describing how to fill that state's complaint form: host, waitForSelector, text-field mappings by label, radio/checkbox mappings by input `name`, conditional-explanation templates, comments-field template + sanitizer rule, file-input selector, and the review-panel content. The orchestrator in `formfill/index.js` reads `window.location.host` at runtime, picks the matching adapter, and runs the pipeline. Adding a new state is one new file in `adapters/` plus a registry entry in `adapters/index.js`.
+- **Logic lives in `formfill/lib/`, never in adapters.** Shared DOM utilities (`dom.js`), radio/checkbox/label fills (`inputs.js`), file upload via DataTransfer (`file-upload.js`), named sanitizer rules (`sanitizers.js`), and the review-panel renderer (`review-panel.js`). When a future adapter needs a new capability, extend the library and add a declarative flag or rule name to the adapter config — don't let `ny.js` grow a helper function that `ca.js` then copies.
+- **Why JSF `name`-based targeting?** NYS DOL form IDs regenerate per render (`form:j_id_42` etc.) but the underlying radio/checkbox `name` attributes are stable (`typeComplainantSel`, `chooseFormA`, `rangeOfPay`, etc.). Text inputs have less stable names, so those fall back to label-text matching scoped by section heading.
+- **File upload** — `attemptFileUpload` sets `input[type=file].files` via `DataTransfer`. If the form keeps our file set after a 1.5s settle, we call it accepted; if JSF silently clears it, we fall back to scrolling to + highlighting the file input with a yellow outline so the user drags the PDF in manually.
+- **Review panel** — dismissable bottom-right overlay, rendered from the adapter's `reviewPanel` config: requirements checklist, file-upload status + PDF preview button, business-address lookup helpers (action names like `clipboardAndOpen`, `webSearch`, `openUrl` resolve to implementations in `review-panel.js`), and footer law-links. This is the intentional human-in-the-loop step: the extension will not submit the complaint, and the panel exists to discourage misuse.
+
+### Build (`esbuild`)
+- `formfill/` is ES-module source. `npm run build-formfill` bundles `formfill/index.js` + all imports into a single `dist/formfill.js` wrapped as an IIFE (`--format=iife`, `--target=chrome120`, `--minify=false`).
+- Why IIFE + un-minified? Chrome's `scripting.executeScript` with `files:` doesn't support native ES module injection reliably, and the Chrome Web Store flags minified bundles as "obfuscated" which delays review. The bundle is ~26 KB of readable code that passes review cleanly.
+- `npm run build` runs `sync-lib` (vendor refresh) + `build-icons` + `build-formfill` together, wired as `postinstall` so a fresh clone + `npm install` produces a ready-to-load extension.
 
 ### User profile (`options.html` / `options.js`)
 - Claimant info (name, email, phone, address) is stored in `chrome.storage.local` under the `complainant` key. Accessible via `chrome://extensions` → equiPay → Details → Extension options.
@@ -57,7 +62,7 @@ MIT License
 | `manifest.json` | MV3 config, permissions, action + options page |
 | `background.js` | Service worker: action click → inject capture; handle `CAPTURE_COMPLETE` → open DOL tab + inject formfill |
 | `content.js` | Parser registry, DOM expansion, html2canvas capture, jsPDF composition |
-| `formfill.js` | JSF name-based field fill, file-upload attempt, review panel |
+| `formfill/` (source) + `dist/formfill.js` (built) | State-adapter registry, library helpers, orchestrator; built via esbuild |
 | `options.html` / `options.js` | Claimant profile editor |
 | `icons/icon-{16,48,128}.png` + `icon.svg` | Toolbar + Web Store icons (generated via `npm run build-icons`) |
 | `vendor/jspdf.umd.min.js` | 3rd-party PDF engine (vendored from `jspdf`) |
@@ -76,7 +81,7 @@ MIT License
 | `storage` | Claimant profile + per-capture data (`chrome.storage.local`) |
 | `tabs` | Open the DOL tab + listen for its `status: complete` |
 | `unlimitedStorage` | PDF data URLs can exceed the default 10MB quota on image-heavy postings |
-| `host_permissions: https://apps.labor.ny.gov/*` | Inject `formfill.js` into the programmatically-opened DOL form tab |
+| `host_permissions: https://apps.labor.ny.gov/*` | Inject the form-fill bundle into the programmatically-opened NY DOL form tab. Additional states' hosts are added here as adapters are registered. |
 
 ## Future Roadmap
 - Additional state labor forms (CA, CO, WA have pay-transparency laws with similar filing flows).

@@ -1,6 +1,7 @@
-# Mark vendored third-party bundles + dev docs so GitHub language stats
-# don't treat them as equiPay's own code.
+# Mark vendored third-party bundles + dev docs + built artifacts so
+# GitHub language stats don't treat them as equiPay's own code.
 vendor/**            linguist-vendored
+dist/**              linguist-generated
 docs/**              linguist-documentation
 
 # Keep icon PNGs as binary; some tools otherwise try to diff them as text.

@@ -1,6 +1,6 @@
 # equiPay
 
-Chrome extension that streamlines filing [New York Pay Transparency Law (§194-b)](https://www.nysenate.gov/legislation/laws/LAB/194-B) violations with the [NYS Department of Labor](https://dol.ny.gov/pay-transparency).
+Chrome extension that streamlines filing pay-transparency-law complaints. Ships with [New York Pay Transparency Law (§194-b)](https://www.nysenate.gov/legislation/laws/LAB/194-B) support today, filed with the [NYS Department of Labor](https://dol.ny.gov/pay-transparency); architected as a per-state adapter registry so other states with similar laws (CA SB 1162, CO Equal Pay for Equal Work Act, WA SHB 1795, etc.) can be added by dropping in one new adapter file.
 
 When you see a job posting on LinkedIn (or other supported boards) that's missing a pay range, one click:
 
@@ -21,7 +21,7 @@ A generic fallback handles unknown sites by finding the largest `<article>` / `<
 ```bash
 git clone https://github.com/pandtlabs/equipay.git
 cd equipay
-npm install    # fetches jspdf + html2canvas and syncs their bundles into the repo root
+npm install    # fetches deps, syncs vendor/, builds icons, and produces dist/formfill.js
 ```
 
 Then:
@@ -40,6 +40,61 @@ Then:
 5. If the PDF wasn't auto-attached, drag it from Downloads into the highlighted upload field.
 6. Review everything, then submit.
 
+## Development
+
+After `npm install`, the repo is loadable as-is (`vendor/`, `icons/*.png`, and `dist/formfill.js` are all produced by the `postinstall` hook).
+
+### Build commands
+
+| Command | What it does |
+|---|---|
+| `npm run build` | Runs all three build steps below in sequence (default after `npm install`) |
+| `npm run sync-lib` | Refreshes `vendor/jspdf.umd.min.js` + `vendor/html2canvas.min.js` from `node_modules/` |
+| `npm run build-icons` | Rasterizes `icons/icon.svg` → `icons/icon-{16,48,128}.png` via `sharp` |
+| `npm run build-formfill` | Bundles `formfill/` (ES-module source) → `dist/formfill.js` via `esbuild` (IIFE, un-minified, Chrome 120 target) |
+
+### Reload flow while iterating
+
+After editing files:
+
+| If you changed… | Run… | Then… |
+|---|---|---|
+| `background.js`, `content.js`, `options.*`, `manifest.json`, anything in `vendor/` | *(nothing — not bundled)* | `chrome://extensions` → equiPay → ↻, then reload any tab you want to test on |
+| Anything in `formfill/` | `npm run build-formfill` | reload extension + reload the DOL tab |
+| `icons/icon.svg` | `npm run build-icons` | reload extension |
+| `package.json` deps | `npm install` (triggers `sync-lib`) | reload extension |
+
+Content scripts stay resident in tabs until you reload those tabs — always refresh the LinkedIn or DOL tab after reloading the extension.
+
+### Source layout
+
+```
+formfill/
+├── index.js              orchestrator (picks adapter by window.location.host)
+├── lib/                  shared DOM / input / file-upload / sanitizer / review-panel helpers
+└── adapters/
+    ├── index.js          host → adapter registry
+    └── ny.js             declarative config for NY DOL §194-b form
+```
+
+Adding a new state = one new file under `adapters/`, one entry in `adapters/index.js`, one host added to `manifest.json`'s `host_permissions`. See [docs/claude.md](docs/claude.md) for full design notes.
+
+## Release
+
+For Chrome Web Store submission, produce a zip that contains the runtime files only — no `formfill/` source, `scripts/`, `docs/`, `node_modules/`, or `package*.json`. The exact zip command + per-permission justifications + listing copy live in [docs/STORE_LISTING.md](docs/STORE_LISTING.md).
+
+Short version:
+
+```bash
+npm run build
+zip -r equipay-0.1.0.zip \
+  manifest.json \
+  background.js content.js options.html options.js \
+  dist/formfill.js \
+  vendor/jspdf.umd.min.js vendor/html2canvas.min.js \
+  icons/icon-16.png icons/icon-48.png icons/icon-128.png
+```
+
 ## Architecture
 
 See [docs/claude.md](docs/claude.md) for the full design notes. TL;DR:
@@ -47,7 +102,7 @@ See [docs/claude.md](docs/claude.md) for the full design notes. TL;DR:
 - **Manifest V3** service worker handles clicks and routes messages.
 - **Capture** uses `html2canvas` on the job-description element directly (not the viewport), after temporarily neutralizing `overflow` / `height` on scroll ancestors so the full content is in the natural document flow.
 - **PDF composition** via `jsPDF` directly, with a metadata header and paginated screenshot.
-- **Form-fill** targets JSF inputs by their stable `name` attribute (generated IDs change per render; names don't).
+- **Form-fill** uses a per-state adapter registry: `formfill/adapters/ny.js` is a pure declarative config of input names, label keywords, and review-panel copy. The orchestrator + shared helpers live in `formfill/lib/`. esbuild bundles it into `dist/formfill.js`. Adding a new state is one new adapter file.
 - **User profile** stored in `chrome.storage.local`; nothing leaves your browser.
 
 ## License

@@ -49,14 +49,14 @@ async function openFormTabAndFill({
     if (changeInfo.status !== "complete") return;
     if (!tab?.url?.includes("apps.labor.ny.gov")) return;
     if (tabId !== createdTab?.id) return;
-    console.log("equiPay: DOL tab loaded, injecting formfill.js", { tabId });
+    console.log("equiPay: DOL tab loaded, injecting form-fill bundle", { tabId });
     chrome.tabs.onUpdated.removeListener(onUpdated);
     try {
       await chrome.scripting.executeScript({
         target: { tabId },
-        files: ["formfill.js"],
+        files: ["dist/formfill.js"],
       });
-      console.log("equiPay: formfill.js injected");
+      console.log("equiPay: dist/formfill.js injected");
     } catch (err) {
       console.error("equiPay: failed to inject form-fill", err);
     }

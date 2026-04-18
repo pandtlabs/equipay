@@ -1,12 +1,14 @@
 {
   "name": "equipay",
   "version": "0.1.0",
-  "description": "NYS Pay Transparency Reporter — Chrome extension.",
+  "description": "Pay-transparency-law complaint helper (starting with NY §194-b; extensible to more states).",
   "private": true,
   "scripts": {
     "sync-lib": "mkdir -p vendor && cp node_modules/jspdf/dist/jspdf.umd.min.js vendor/jspdf.umd.min.js && cp node_modules/html2canvas/dist/html2canvas.min.js vendor/html2canvas.min.js",
     "build-icons": "node scripts/build-icons.mjs",
-    "postinstall": "npm run sync-lib"
+    "build-formfill": "esbuild formfill/index.js --bundle --outfile=dist/formfill.js --format=iife --target=chrome120 --minify=false --log-level=warning",
+    "build": "npm run sync-lib && npm run build-icons && npm run build-formfill",
+    "postinstall": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -25,6 +27,7 @@
     "jspdf": "^4.2.1"
   },
   "devDependencies": {
+    "esbuild": "^0.28.0",
     "sharp": "^0.34.5"
   }
 }

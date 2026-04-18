@@ -1,2 +1,18 @@
 node_modules/
 .DS_Store
+
+# Built artifact — produced by `npm run build` / postinstall.
+dist/
+
+# Release bundles produced for Chrome Web Store submission.
+equipay-*.zip
+
+# Editor / tool noise.
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+
+# Local env files, just in case something ever needs one.
+.env
+.env.local

@@ -7,7 +7,7 @@ Copy-paste reference for the Chrome Web Store developer dashboard. Keep this fil
 ## Listing basics
 
 - **Extension name:** equiPay
-- **Short description** (132 chars max): *One-click evidence capture + pre-filled NYS DOL complaint form for job postings that violate NY's Pay Transparency Law.*
+- **Short description** (132 chars max): *One-click evidence capture + pre-filled pay-transparency-law complaint forms (NY today; more states planned).*
 - **Category:** Productivity (primary). Secondary: Accessibility / Legal Tools (whichever the dashboard offers).
 - **Language:** English
 
@@ -27,6 +27,8 @@ equiPay does that work for you:
 • REVIEW: Before you submit, a review panel walks you through the §194-b requirements (4+ employees, NY-based or NY-reporting, missing range). Helpers for the employer's registered business address (NY Dept. of State lookup, web search) keep you in control of that step.
 
 equiPay never submits the complaint itself — you review and submit by hand.
+
+COMING SOON: equiPay is built as a per-state adapter registry. Additional states with pay-transparency laws (CA SB 1162, CO Equal Pay for Equal Work Act, WA SHB 1795, IL HB 3129, and others) will be added as their complaint-form flows are mapped. Today the extension supports New York only and remains silent on every other site.
 
 100% local. No analytics, no telemetry, no external servers. Your claimant info stays in chrome.storage.local on your device. Full source code + MIT license: https://github.com/pandtlabs/equipay
 ```
@@ -90,27 +92,21 @@ Capture at 1280×800 in a Chrome window with DevTools closed for a clean frame. 
 
 Optional but help discoverability. Can be a stylized version of the icon + "equiPay — Pay Transparency, Filed Fast" tagline.
 
-## Dashboard steps in order
-
-1. Register at <https://chrome.google.com/webstore/devconsole> ($5 one-time).
-2. Click **New Item**, upload a .zip of the extension directory (see below).
-3. Fill the listing fields from this doc.
-4. Upload icons (icons/icon-128.png is used on the listing page) and screenshots.
-5. Paste the privacy policy URL.
-6. Fill permission justifications.
-7. Submit for review.
-
 ## Producing the upload zip
 
 The Store accepts a zip of the extension folder. `node_modules/`, `scripts/`, SVG source, and dev-only files should not be shipped. Use:
 
+Run `npm run build` first to produce `dist/formfill.js` from the source in `formfill/`.
+
 ```bash
 cd /Users/peter/Projects/equipay
+npm run build
 zip -r equipay-0.1.0.zip \
   manifest.json \
-  background.js content.js formfill.js options.html options.js \
+  background.js content.js options.html options.js \
+  dist/formfill.js \
   vendor/jspdf.umd.min.js vendor/html2canvas.min.js \
   icons/icon-16.png icons/icon-48.png icons/icon-128.png
 ```
 
-Verify the zip doesn't include `node_modules/`, `.git/`, `package*.json`, `docs/`, `scripts/`, or `icons/icon.svg`. Those are for development only.
+Verify the zip doesn't include `node_modules/`, `.git/`, `package*.json`, `docs/`, `scripts/`, `formfill/` (the un-bundled source), or `icons/icon.svg`. Those are for development only.
