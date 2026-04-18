@@ -77,7 +77,7 @@ formfill/
     └── ny.js             declarative config for NY DOL §194-b form
 ```
 
-Adding a new state = one new file under `adapters/`, one entry in `adapters/index.js`, one host added to `manifest.json`'s `host_permissions`. See [docs/claude.md](docs/claude.md) for full design notes.
+Adding a new state = one new file under `adapters/`, one entry in `adapters/index.js`, one host added to `manifest.json`'s `host_permissions`. See [docs/ADDING_A_STATE.md](docs/ADDING_A_STATE.md) for the step-by-step playbook, or [docs/claude.md](docs/claude.md) for full design notes.
 
 ## Release
 

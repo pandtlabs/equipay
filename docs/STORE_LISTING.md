@@ -8,7 +8,7 @@ Copy-paste reference for the Chrome Web Store developer dashboard. Keep this fil
 
 - **Extension name:** equiPay
 - **Short description** (132 chars max): *One-click evidence capture + pre-filled pay-transparency-law complaint forms (NY today; more states planned).*
-- **Category:** Productivity (primary). Secondary: Accessibility / Legal Tools (whichever the dashboard offers).
+- **Category:** Workflow & Planning (primary). Fallback: Tools. Don't pick Privacy & Security — that category is reserved for extensions whose core function is privacy/security (VPNs, password managers), not for any extension that happens to be privacy-respecting.
 - **Language:** English
 
 ## Detailed description (dashboard field)
@@ -77,16 +77,20 @@ Certifications:
 `https://pandtlabs.github.io/equipay/PRIVACY` — once GitHub Pages is enabled for the repo.
 (Alternative: link directly to [PRIVACY.md](PRIVACY.md) on GitHub — the Store accepts a repo URL.)
 
-## Screenshots (1280×800 recommended; at least one required)
+## Screenshots (1280×800 PNG/JPEG; 1–5 accepted)
 
-Plan on producing these before submitting:
+Four screenshots tell the story cleanly. Take them in this order:
 
-1. **equiPay active on a LinkedIn posting** — toolbar icon clicked, capture in progress.
-2. **The generated PDF** — showing the metadata header + job description.
-3. **The DOL form pre-filled** — visible claimant info, radios, and "No" on pay range.
-4. **The review panel** — showing requirements checklist and address lookup buttons.
+1. **Context**: a job posting missing a pay range with equiPay pinned to the toolbar. The "this is what the tool works on" frame.
+2. **Pre-filled DOL form**: scrolled to the 194-b section with radios selected + the Claimant section filled. The main value shot.
+3. **Review panel close-up**: crop to the bottom-right panel showing the requirements checklist, PDF upload status, and address-lookup buttons. Communicates the human-in-the-loop design.
+4. **Generated PDF**: opened in Chrome's PDF viewer, showing the metadata header + top of the screenshot.
 
-Capture at 1280×800 in a Chrome window with DevTools closed for a clean frame. macOS `Cmd+Shift+4` + space for a window screenshot works.
+### Prep before capturing
+
+- **Use dummy claimant info.** Temporarily set your Options profile to `Jane Doe / jane.doe@example.com / 123 Main St` or similar before taking screenshots, then restore your real info. Don't leak your real address/phone to a public Store listing.
+- **Redact or pick carefully for the employer shown.** Showing a specific employer as a "violator" in a public listing without actually filing is defamation-adjacent. Either blur the employer name or pick a posting that's genuinely missing a pay range from a company you're about to file against.
+- **Capture at exactly 1280×800.** Chrome DevTools → Toggle Device Toolbar (Cmd+Shift+M) → custom size 1280×800 → use the "Capture screenshot" option in the device-emulation three-dot menu. Or macOS `Cmd+Shift+4` + drag-select a 1280×800 region.
 
 ## Small promo tile (440×280) and marquee (1400×560)
 
@@ -99,7 +103,7 @@ The Store accepts a zip of the extension folder. `node_modules/`, `scripts/`, SV
 Run `npm run build` first to produce `dist/formfill.js` from the source in `formfill/`.
 
 ```bash
-cd /Users/peter/Projects/equipay
+cd /path/to/equipay
 npm run build
 zip -r equipay-0.1.0.zip \
   manifest.json \

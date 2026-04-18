@@ -68,7 +68,7 @@ MIT License
 | `vendor/jspdf.umd.min.js` | 3rd-party PDF engine (vendored from `jspdf`) |
 | `vendor/html2canvas.min.js` | 3rd-party DOM-to-canvas rasterizer (vendored from `html2canvas`) |
 | `scripts/build-icons.mjs` | Build-time rasterizer for the icon SVG |
-| `docs/claude.md`, `docs/STORE_LISTING.md` | Maintainer design notes + Web Store submission copy |
+| `docs/claude.md`, `docs/STORE_LISTING.md`, `docs/ADDING_A_STATE.md` | Design notes, Web Store copy, per-state adapter playbook |
 | `package.json` | npm deps + `sync-lib` + `build-icons` scripts |
 
 ## Permissions

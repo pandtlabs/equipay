@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "equiPay",
   "version": "0.1.0",
-  "description": "Capture a job posting as PDF evidence and pre-fill state pay-transparency-law complaint forms. Ships with New York §194-b; more states planned.",
+  "description": "Capture job postings as PDF evidence and pre-fill state pay-transparency complaint forms. NY today; more states planned.",
   "permissions": [
     "activeTab",
     "downloads",
