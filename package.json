@@ -1,0 +1,26 @@
+{
+  "name": "equipay",
+  "version": "0.1.0",
+  "description": "NYS Pay Transparency Reporter — Chrome extension.",
+  "private": true,
+  "scripts": {
+    "sync-lib": "cp node_modules/jspdf/dist/jspdf.umd.min.js ./jspdf.umd.min.js && cp node_modules/html2canvas/dist/html2canvas.min.js ./html2canvas.min.js",
+    "postinstall": "npm run sync-lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pandtlabs/equipay.git"
+  },
+  "keywords": [],
+  "author": "P&T Labs LLC",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/pandtlabs/equipay/issues"
+  },
+  "homepage": "https://github.com/pandtlabs/equipay#readme",
+  "dependencies": {
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1"
+  }
+}

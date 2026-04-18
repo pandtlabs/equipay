@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "equiPay",
+  "version": "0.1.0",
+  "description": "Capture a job posting as PDF evidence and pre-fill the NYS DOL Pay Transparency complaint form.",
+  "permissions": [
+    "activeTab",
+    "downloads",
+    "scripting",
+    "storage",
+    "tabs",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "https://apps.labor.ny.gov/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "equiPay — capture this job posting and open the NYS DOL form"
+  },
+  "options_page": "options.html"
+}
