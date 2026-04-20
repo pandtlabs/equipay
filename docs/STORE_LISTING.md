@@ -47,7 +47,6 @@ The dashboard asks for a one-line reason per permission. Copy these verbatim.
 |---|---|
 | `activeTab` | Required to read the job posting on the tab the user clicks equiPay on, so we can extract the employer, job title, and description. |
 | `scripting` | Required to inject the capture script on the active job-posting tab and the form-fill script on the NYS DOL complaint form. |
-| `downloads` | Required to save the generated evidence PDF to the user's Downloads folder. |
 | `storage` | Required to store the user's claimant profile (set via the Options page) and to pass the generated PDF between the capture and form-fill steps. |
 | `unlimitedStorage` | The generated evidence PDF can exceed Chrome's default 10MB per-item storage quota when the job posting is image-heavy. |
 | `tabs` | Required to open the NYS DOL complaint form in a new tab after capture and to listen for its load-complete event so the form-fill script runs at the right moment. |
