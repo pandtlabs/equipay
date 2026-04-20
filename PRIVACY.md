@@ -34,7 +34,6 @@ equiPay does **not** read your browsing history, other open tabs, form data on n
 
 - `activeTab` — allows the extension to read the tab you clicked on.
 - `scripting` — allows the extension to inject its capture and form-fill scripts.
-- `downloads` — allows the extension to save the evidence PDF to your Downloads folder.
 - `storage` / `unlimitedStorage` — allows the extension to store your claimant profile and the generated PDF locally.
 - `tabs` — allows the extension to open the NYS DOL complaint form in a new tab.
 - Host permission for `apps.labor.ny.gov` — allows the extension to pre-fill the complaint form on that specific site.

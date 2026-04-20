@@ -76,7 +76,6 @@ MIT License
 | Permission | Why |
 |---|---|
 | `activeTab` | Inject capture scripts on whichever tab the user clicks equiPay on |
-| `downloads` | Save the generated PDF |
 | `scripting` | `executeScript` into the capture tab and the DOL form tab |
 | `storage` | Claimant profile + per-capture data (`chrome.storage.local`) |
 | `tabs` | Open the DOL tab + listen for its `status: complete` |

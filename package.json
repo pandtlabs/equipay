@@ -1,13 +1,14 @@
 {
   "name": "equipay",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pay-transparency-law complaint helper (starting with NY §194-b; extensible to more states).",
   "private": true,
   "scripts": {
-    "sync-lib": "mkdir -p vendor && cp node_modules/jspdf/dist/jspdf.umd.min.js vendor/jspdf.umd.min.js && cp node_modules/html2canvas/dist/html2canvas.min.js vendor/html2canvas.min.js",
+    "sync-lib": "mkdir -p vendor && cp node_modules/jspdf/dist/jspdf.umd.min.js vendor/jspdf.umd.min.js && cp node_modules/html2canvas/dist/html2canvas.min.js vendor/html2canvas.min.js && node scripts/strip-remote-urls.mjs",
     "build-icons": "node scripts/build-icons.mjs",
     "build-formfill": "esbuild formfill/index.js --bundle --outfile=dist/formfill.js --format=iife --target=chrome120 --minify=false --log-level=warning",
     "build": "npm run sync-lib && npm run build-icons && npm run build-formfill",
+    "package": "npm run build && node scripts/package.mjs",
     "postinstall": "npm run build"
   },
   "repository": {
