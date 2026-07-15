@@ -195,6 +195,8 @@ If your state is detectable from the posting itself, also extend `detectJurisdic
 npm run build-formfill      # rebuild dist/formfill.js
 ```
 
+Also save the state's form HTML into `test/fixtures/` and add a scenario to `test/formfill.test.mjs` asserting your adapter's fills (see [test/README.md](../test/README.md)) — that's what keeps the adapter from silently rotting when the form changes. Then test the live flow:
+
 Then at `chrome://extensions` → equiPay → ↻ (reload). Also reload the form tab.
 
 Test the full flow on a real job posting:

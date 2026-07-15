@@ -77,6 +77,7 @@ MIT License
 | `vendor/html2canvas-pro.min.js` | 3rd-party DOM-to-canvas rasterizer (vendored from `html2canvas-pro`) |
 | `scripts/build-icons.mjs` | Build-time rasterizer for the icon SVG |
 | `docs/claude.md`, `docs/STORE_LISTING.md`, `docs/ADDING_A_STATE.md` | Design notes, Web Store copy, per-state adapter playbook |
+| `test/` | jsdom regression suites (`npm test`): form fills against saved real form HTML (`test/fixtures/`), capture fallbacks on synthetic stale/shadow-DOM LinkedIn pages, Trusted Types shim |
 | `package.json` | npm deps + `sync-lib` + `build-icons` scripts |
 
 ## Permissions

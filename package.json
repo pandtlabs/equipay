@@ -8,6 +8,7 @@
     "build-icons": "node scripts/build-icons.mjs",
     "build-formfill": "esbuild formfill/index.js --bundle --outfile=dist/formfill.js --format=iife --target=chrome120 --minify=false --log-level=warning",
     "build": "npm run sync-lib && npm run build-icons && npm run build-formfill",
+    "test": "npm run build-formfill && node test/tt-shim.test.mjs && node test/capture.test.mjs && node test/formfill.test.mjs",
     "package": "npm run build && node scripts/package.mjs",
     "postinstall": "npm run build"
   },
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.0",
+    "jsdom": "^29.1.1",
     "sharp": "^0.34.5"
   }
 }

@@ -52,6 +52,7 @@ After `npm install`, the repo is loadable as-is (`vendor/`, `icons/*.png`, and `
 | `npm run sync-lib` | Refreshes `vendor/jspdf.umd.min.js` + `vendor/html2canvas-pro.min.js` from `node_modules/` |
 | `npm run build-icons` | Rasterizes `icons/icon.svg` → `icons/icon-{16,48,128}.png` via `sharp` |
 | `npm run build-formfill` | Bundles `formfill/` (ES-module source) → `dist/formfill.js` via `esbuild` (IIFE, un-minified, Chrome 120 target) |
+| `npm test` | Rebuilds the form-fill bundle, then runs the jsdom test suites in [test/](test/) (form fills against saved real form HTML, LinkedIn capture fallbacks, Trusted Types shim) |
 
 ### Reload flow while iterating
 
