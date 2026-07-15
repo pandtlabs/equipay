@@ -1,25 +1,14 @@
-// Complaint-form destinations by jurisdiction. NYC salary-transparency
-// violations are enforced by the NYC Commission on Human Rights (NYCHRL
-// § 8-107(32)); everywhere else in NY state it's the NYS DOL (§194-b).
-const FORM_URLS = {
-  nys: "https://apps.labor.ny.gov/DOL_Complaint_Form/SalaryComplaint.faces",
-  nyc: "https://www.nyc.gov/site/cchr/about/report-discrimination.page",
-};
+// Complaint-form destinations come from the shared registry. NYC
+// salary-transparency violations are enforced by the NYC Commission on
+// Human Rights (NYCHRL § 8-107(32)); everywhere else in NY state it's the
+// NYS DOL (§194-b). The capture pipeline itself is injected by the action
+// popup (popup.js), where the user picks the agency.
+importScripts("jurisdictions.js");
+const FORM_URLS = Object.fromEntries(
+  EQUIPAY_JURISDICTIONS.map((j) => [j.id, j.formUrl])
+);
 
 const PENDING_FILL_KEY = "pendingFill";
-
-// ——— Action click: inject capture pipeline ———
-chrome.action.onClicked.addListener(async (tab) => {
-  if (!tab?.id) return;
-  try {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["vendor/jspdf.umd.min.js", "vendor/html2canvas-pro.min.js", "content.js"],
-    });
-  } catch (err) {
-    console.error("equiPay: failed to inject capture scripts", err);
-  }
-});
 
 // ——— Message router ———
 chrome.runtime.onMessage.addListener((msg) => {

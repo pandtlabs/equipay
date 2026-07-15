@@ -18,6 +18,7 @@
     "service_worker": "background.js"
   },
   "action": {
+    "default_popup": "popup.html",
     "default_title": "equiPay — capture this job posting and open the pay-transparency complaint form",
     "default_icon": {
       "16": "icons/icon-16.png",

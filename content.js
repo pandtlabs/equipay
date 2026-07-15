@@ -60,8 +60,40 @@
           : location.href;
         // LinkedIn renames its top-card/description classes every redesign;
         // keep a chain of every generation we've seen (logged-in + guest
-        // views) and fall back to JSON-LD for the metadata.
+        // views), then fall back to selector-independent sources: the
+        // document title ("Job Title | Company | LinkedIn"), the top card's
+        // /company/ profile link, and JSON-LD (guest views).
         const ld = readJobPostingLD();
+        const fromTitle = (() => {
+          const m = document.title
+            .replace(/^\(\d+\)\s*/, "") // notification-count prefix
+            .match(/^(.*?)\s*\|\s*(.*?)\s*\|\s*LinkedIn\s*$/i);
+          return m
+            ? { jobTitle: m[1].trim(), companyName: m[2].trim() }
+            : {};
+        })();
+        const companyFromLink = (() => {
+          const scope =
+            document.querySelector('[class*="top-card"]') ||
+            document.querySelector("main") ||
+            document;
+          const link = scope.querySelector('a[href*="/company/"]');
+          const t = link?.innerText?.trim().split("\n")[0].trim();
+          return t && t.length > 1 && t.length < 120 ? t : null;
+        })();
+        // Location by text shape rather than class name: scan the top card
+        // for "City, ST" or "… Metropolitan Area". Keeps NYC-vs-NYS routing
+        // working when the location span's class changes.
+        const locFromTopCard = (() => {
+          const t =
+            document.querySelector('[class*="top-card"]')?.innerText || "";
+          const m =
+            t.match(
+              /([A-Z][A-Za-z.'&-]*(?:\s+[A-Z&][A-Za-z.'&-]*)*,\s*[A-Z]{2})(?![A-Za-z])/
+            ) ||
+            t.match(/((?:Greater\s+)?[A-Z][A-Za-z ]+Metropolitan Area|Greater [A-Za-z ]+ Area)/);
+          return m ? m[1].trim() : null;
+        })();
         return {
           jdContainer:
             document.querySelector("#job-details") ||
@@ -76,18 +108,22 @@
             text(document.querySelector('[class*="top-card"] [class*="company-name"]')) ||
             text(document.querySelector(".topcard__org-name-link")) ||
             ld?.hiringOrganization?.name ||
+            fromTitle.companyName ||
+            companyFromLink ||
             null,
           jobTitle:
             text(document.querySelector(".job-details-jobs-unified-top-card__job-title")) ||
             text(document.querySelector(".jobs-unified-top-card__job-title")) ||
             text(document.querySelector(".top-card-layout__title")) ||
             ld?.title ||
+            fromTitle.jobTitle ||
             null,
           location:
             text(document.querySelector(".job-details-jobs-unified-top-card__bullet")) ||
             text(document.querySelector(".jobs-unified-top-card__bullet")) ||
             text(document.querySelector(".topcard__flavor--bullet")) ||
-            ldLocation(ld),
+            ldLocation(ld) ||
+            locFromTopCard,
           url: canonicalUrl,
         };
       },
@@ -560,7 +596,21 @@
     location: parsed.location?.trim() || null,
     timestamp: new Date().toISOString(),
   };
-  meta.jurisdiction = detectJurisdiction(meta.location);
+  // The popup's agency picker overrides location-based detection ("auto").
+  // Both values ride along so the review panel can flag a mismatch.
+  meta.jurisdictionDetected = detectJurisdiction(meta.location);
+  let filingChoice = "auto";
+  try {
+    const stored = await chrome.storage.local.get("filingChoice");
+    filingChoice = stored.filingChoice || "auto";
+  } catch {
+    /* storage unavailable — fall back to detection */
+  }
+  meta.jurisdiction =
+    filingChoice !== "auto" ? filingChoice : meta.jurisdictionDetected;
+  console.log(
+    `equiPay: jurisdiction=${meta.jurisdiction} (choice=${filingChoice}, detected=${meta.jurisdictionDetected})`
+  );
 
   const jdFullText = jdContainer?.innerText?.trim() || "";
   const description = jdFullText ? jdFullText.slice(0, 2500) : null;

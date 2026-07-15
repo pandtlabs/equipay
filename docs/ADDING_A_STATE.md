@@ -180,14 +180,14 @@ The background service worker injects `dist/formfill.js` into the newly-opened f
 
 Prefer path-scoped patterns (like the nyc.gov ones) when the form lives on a big shared domain — narrower grants review faster.
 
-## 6. Handle the new form URL in `background.js`
+## 6. Register the jurisdiction in `jurisdictions.js`
 
-The service worker keeps a `FORM_URLS` map keyed by jurisdiction id (`nys`, `nyc`, …). Add your state's form URL there. Then decide how captures route to it:
+Add an entry (`id`, `label`, `blurb`, `formUrl`) to the shared registry in `jurisdictions.js`. That one entry does two things:
 
-- **Location-based detection** (how `nyc` vs `nys` works today): `detectJurisdiction()` in `content.js` inspects the posting's listed location and stamps `meta.jurisdiction`; the worker opens `FORM_URLS[meta.jurisdiction]`. Extend the heuristic if your state is detectable from the posting.
-- **User choice**: for a state that can't be inferred, add a "preferred state" dropdown to the Options page and read it in the worker before falling back to detection.
+- The **action popup** lists it as a filing choice automatically (the picked id is stored as `filingChoice` and stamped onto `meta.jurisdiction` by `content.js`).
+- The **service worker** builds its `FORM_URLS` routing map from the registry, so `CAPTURE_COMPLETE` opens your form.
 
-Whichever you pick, also consider adding a `switchForm` entry to the relevant adapters' `reviewPanel` config so users can hop to the right agency in one click when routing guesses wrong (the button sends `OPEN_ALTERNATE_FORM` with a jurisdiction id back to the worker).
+If your state is detectable from the posting itself, also extend `detectJurisdiction()` in `content.js` so the popup's **Auto-detect** mode can route to it. And consider a `switchForm` entry in the relevant adapters' `reviewPanel` config so users can hop agencies in one click (the button sends `OPEN_ALTERNATE_FORM` with a jurisdiction id back to the worker).
 
 ## 7. Build, reload, test
 

@@ -91,6 +91,10 @@ export function showReviewPanel({
 
     ${rp.switchForm ? `
       <div style="padding:10px 14px;border-bottom:1px solid #eee;">
+        ${meta?.jurisdictionDetected === rp.switchForm.jurisdiction ? `
+          <div style="font-size:12px;color:#c67a00;margin-bottom:6px;">
+            ⚠️ Based on the posting's listed location, the other agency may have jurisdiction:
+          </div>` : ""}
         <button data-equipay-action="switchForm"
                 data-equipay-target="${escapeHtml(rp.switchForm.jurisdiction)}"
                 class="equipay-btn">↪ ${escapeHtml(rp.switchForm.label)}</button>

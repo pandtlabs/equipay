@@ -2,10 +2,10 @@
 
 Chrome extension that streamlines filing pay-transparency-law complaints. Ships with New York support today — [NYS Pay Transparency Law (§194-b)](https://www.nysenate.gov/legislation/laws/LAB/194-B) complaints filed with the [NYS Department of Labor](https://dol.ny.gov/pay-transparency), and, for jobs based in New York City, [NYC salary-transparency](https://www.nyc.gov/site/cchr/media/pay-transparency.page) reports (NYC Admin. Code § 8-107(32)) filed with the [NYC Commission on Human Rights](https://www.nyc.gov/site/cchr/about/report-discrimination.page), which is the agency that actually enforces NYC-employer violations. Architected as a per-jurisdiction adapter registry so other states with similar laws (CA SB 1162, CO Equal Pay for Equal Work Act, WA SHB 1795, etc.) can be added by dropping in one new adapter file.
 
-When you see a job posting on LinkedIn (or other supported boards) that's missing a pay range, one click:
+When you see a job posting on LinkedIn (or other supported boards) that's missing a pay range, click the toolbar icon and pick the agency (or leave it on **Auto-detect** — your choice is remembered). equiPay then:
 
 1. Captures the full job description as a PDF (with URL, timestamp, and metadata header).
-2. Detects the jurisdiction from the posting's listed location (NYC vs. rest of NY state) and opens the matching complaint form — NYS DOL or NYC CCHR — in a new tab. A review-panel button switches to the other agency if the heuristic guessed wrong.
+2. Opens the matching complaint form — NYS DOL, or NYC CCHR for NYC-based jobs when auto-detecting — in a new tab. The review panel warns if the posting's location suggests the other agency, and a button switches over in one click.
 3. Pre-fills your claimant info, the violation checkboxes, and a standard explanation.
 4. Attempts to attach the PDF automatically — falls back to highlighting the file field if the form rejects the programmatic upload.
 5. Shows a review panel with the law's requirements, a business-address lookup helper, and links to the statute so you can confirm before submitting. Fields that require your judgment (e.g. the CCHR form's "I acknowledge" checkbox) are deliberately left for you.
@@ -33,8 +33,8 @@ Then:
 
 ## Use
 
-1. On a job posting that's missing a pay range, click the equiPay toolbar icon.
-2. A PDF downloads; a new tab opens to the NYS DOL form (or the NYC CCHR report form for NYC-based jobs), pre-filled.
+1. On a job posting that's missing a pay range, click the equiPay toolbar icon and pick the agency (Auto-detect / NYS DOL / NYC CCHR). Your pick is remembered for next time.
+2. A PDF downloads; a new tab opens to the chosen form, pre-filled.
 3. Read the review panel at the bottom-right. Confirm all the listed requirements apply (4+ employees, NY/NYC job, missing range, accurate claimant info) and answer any fields equiPay left blank.
 4. Use the **🔍 NY DOS** or **🌐 Web search** buttons to find the employer's business address; paste it into the Business Information section.
 5. If the PDF wasn't auto-attached, drag it from Downloads into the highlighted upload field.
@@ -59,7 +59,7 @@ After editing files:
 
 | If you changed… | Run… | Then… |
 |---|---|---|
-| `background.js`, `content.js`, `options.*`, `manifest.json`, anything in `vendor/` | *(nothing — not bundled)* | `chrome://extensions` → equiPay → ↻, then reload any tab you want to test on |
+| `background.js`, `content.js`, `popup.*`, `jurisdictions.js`, `options.*`, `manifest.json`, anything in `vendor/` | *(nothing — not bundled)* | `chrome://extensions` → equiPay → ↻, then reload any tab you want to test on |
 | Anything in `formfill/` | `npm run build-formfill` | reload extension + reload the DOL tab |
 | `icons/icon.svg` | `npm run build-icons` | reload extension |
 | `package.json` deps | `npm install` (triggers `sync-lib`) | reload extension |
@@ -78,7 +78,7 @@ formfill/
     └── nyc.js            declarative config for NYC CCHR report form (§ 8-107(32))
 ```
 
-Adding a new state = one new file under `adapters/`, one entry in `adapters/index.js`, one host added to `manifest.json`'s `host_permissions`, and a `FORM_URLS` entry in `background.js`. See [docs/ADDING_A_STATE.md](docs/ADDING_A_STATE.md) for the step-by-step playbook, or [docs/claude.md](docs/claude.md) for full design notes.
+Adding a new state = one new file under `adapters/`, one entry in `adapters/index.js`, one host added to `manifest.json`'s `host_permissions`, and one entry in `jurisdictions.js` (which drives both the popup picker and the service worker's form-URL routing). See [docs/ADDING_A_STATE.md](docs/ADDING_A_STATE.md) for the step-by-step playbook, or [docs/claude.md](docs/claude.md) for full design notes.
 
 ## Release
 
@@ -94,7 +94,7 @@ npm run package    # builds + writes equipay-<version>.zip with only runtime fil
 
 See [docs/claude.md](docs/claude.md) for the full design notes. TL;DR:
 
-- **Manifest V3** service worker handles clicks, routes messages, and picks the complaint form by detected jurisdiction (NYC vs. rest of NY).
+- **Manifest V3** with an action popup (agency picker: Auto-detect / NYS DOL / NYC CCHR, driven by `jurisdictions.js`) that injects the capture pipeline; the service worker routes messages and opens the complaint form for the chosen (or detected) jurisdiction.
 - **Capture** uses `html2canvas-pro` (maintained html2canvas fork with modern-CSS color support) on the job-description element directly (not the viewport), after temporarily neutralizing `overflow` / `height` on scroll ancestors so the full content is in the natural document flow. If rasterization fails, the PDF falls back to the extracted job-description text so capture never hard-fails.
 - **PDF composition** via `jsPDF` directly, with a metadata header and paginated screenshot.
 - **Form-fill** uses a per-jurisdiction adapter registry: `formfill/adapters/ny.js` and `nyc.js` are pure declarative configs of input names, label keywords, and review-panel copy. The orchestrator + shared helpers live in `formfill/lib/`. esbuild bundles it into `dist/formfill.js`. Adding a new state is one new adapter file.

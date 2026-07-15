@@ -22,7 +22,7 @@ equiPay does that work for you:
 
 • CAPTURE: Click the toolbar icon on any job posting (LinkedIn, Indeed, Glassdoor, Greenhouse, Lever, ZipRecruiter, Monster, Workday, or generic fallback). equiPay saves a clean PDF of the full job description with a timestamped URL header.
 
-• ROUTE: equiPay detects whether the job is NYC-based and opens the right agency's form — the NYS DOL complaint form or the NYC CCHR discrimination-report form. One click in the review panel switches agencies if the detection guessed wrong.
+• ROUTE: pick the agency when you click the icon — or leave it on Auto-detect, which opens the NYS DOL complaint form or the NYC CCHR discrimination-report form based on the job's location. The review panel warns on a mismatch and switches agencies in one click.
 
 • PRE-FILL: equiPay pre-fills your claimant info, the violation checkboxes, a standard explanation of the missing pay range, and attaches the PDF. Fields that require your judgment (like the CCHR form's legal acknowledgement) are left for you.
 
@@ -111,6 +111,6 @@ cd /path/to/equipay
 npm run package    # builds + writes equipay-<version>.zip
 ```
 
-The zip includes only: `manifest.json`, `background.js`, `content.js`, `options.html`, `options.js`, `dist/formfill.js`, `vendor/jspdf.umd.min.js`, `vendor/html2canvas-pro.min.js`, and the three PNG icons (see `scripts/package.mjs`).
+The zip includes only: `manifest.json`, `background.js`, `content.js`, `jurisdictions.js`, `popup.html`, `popup.js`, `options.html`, `options.js`, `dist/formfill.js`, `vendor/jspdf.umd.min.js`, `vendor/html2canvas-pro.min.js`, and the three PNG icons (see `scripts/package.mjs`).
 
 Verify the zip doesn't include `node_modules/`, `.git/`, `package*.json`, `docs/`, `scripts/`, `formfill/` (the un-bundled source), or `icons/icon.svg`. Those are for development only.
