@@ -43,17 +43,51 @@
     );
   }
 
+  // querySelector variants that pierce open shadow roots — newer LinkedIn
+  // surfaces render panes inside web components, invisible to plain
+  // document.querySelector.
+  function collectShadowRoots(root, out) {
+    for (const el of root.querySelectorAll("*")) {
+      if (el.shadowRoot) {
+        out.push(el.shadowRoot);
+        collectShadowRoots(el.shadowRoot, out);
+      }
+    }
+    return out;
+  }
+  function deepQuery(selector) {
+    for (const root of [document, ...collectShadowRoots(document, [])]) {
+      const el = root.querySelector(selector);
+      if (el) return el;
+    }
+    return null;
+  }
+  function deepQueryAll(selector) {
+    return [document, ...collectShadowRoots(document, [])].flatMap((root) => [
+      ...root.querySelectorAll(selector),
+    ]);
+  }
+
+  // parentElement that hops shadow boundaries (shadow-root child → host).
+  function parentOf(el) {
+    if (el.parentElement) return el.parentElement;
+    const root = el.getRootNode?.();
+    return typeof ShadowRoot !== "undefined" && root instanceof ShadowRoot
+      ? root.host
+      : null;
+  }
+
   // Class-name-independent JD locator: every recent LinkedIn layout heads
   // the description with "About the job". Walk up from that heading to the
   // smallest ancestor that holds the full description text, so the capture
   // stays tight even when we don't recognize any class names.
   function containerFromAboutHeading() {
-    const heading = [
-      ...document.querySelectorAll("h1, h2, h3, h4, h5, strong"),
-    ].find((el) => /^\s*about the job\s*$/i.test(el.textContent || ""));
+    const heading = deepQueryAll("h1, h2, h3, h4, h5, strong").find((el) =>
+      /^\s*about the job\s*$/i.test(el.textContent || "")
+    );
     if (!heading) return null;
-    let el = heading.parentElement;
-    for (let depth = 0; el && depth < 8; depth++, el = el.parentElement) {
+    let el = parentOf(heading);
+    for (let depth = 0; el && depth < 8; depth++, el = parentOf(el)) {
       if ((el.innerText || "").trim().length > 600) return el;
     }
     return null;
@@ -103,8 +137,8 @@
         })();
         const companyFromLink = (() => {
           const scope =
-            document.querySelector('[class*="top-card"]') ||
-            document.querySelector("main") ||
+            deepQuery('[class*="top-card"]') ||
+            deepQuery("main") ||
             document;
           const link = scope.querySelector('a[href*="/company/"]');
           const t = link?.innerText?.trim().split("\n")[0].trim();
@@ -114,8 +148,7 @@
         // for "City, ST" or "… Metropolitan Area". Keeps NYC-vs-NYS routing
         // working when the location span's class changes.
         const locFromTopCard = (() => {
-          const t =
-            document.querySelector('[class*="top-card"]')?.innerText || "";
+          const t = deepQuery('[class*="top-card"]')?.innerText || "";
           const m =
             t.match(
               /([A-Z][A-Za-z.'&-]*(?:\s+[A-Z&][A-Za-z.'&-]*)*,\s*[A-Z]{2})(?![A-Za-z])/
@@ -125,19 +158,20 @@
         })();
         return {
           jdContainer: resolveContainer([
-            ["#job-details", () => document.querySelector("#job-details")],
-            [".jobs-description-content__text", () => document.querySelector(".jobs-description-content__text")],
-            [".jobs-description__content", () => document.querySelector(".jobs-description__content")],
-            ['[class*="jobs-description"]', () => document.querySelector('[class*="jobs-description"]')],
+            ["#job-details", () => deepQuery("#job-details")],
+            [".jobs-description-content__text", () => deepQuery(".jobs-description-content__text")],
+            [".jobs-description__content", () => deepQuery(".jobs-description__content")],
+            ['[class*="jobs-description"]', () => deepQuery('[class*="jobs-description"]')],
             // Class-independent: works on the 2026 /jobs/search-results/
-            // two-pane layout where none of the known classes exist.
+            // two-pane layout where none of the known classes exist. All
+            // locators pierce open shadow roots via deepQuery.
             ["about-the-job heading", containerFromAboutHeading],
             // Details-pane wrapper — looser than the heading walk, but far
             // tighter than falling back to <main> (which includes the list).
-            ['[class*="job-details"]', () => document.querySelector('[class*="job-details"]')],
+            ['[class*="job-details"]', () => deepQuery('[class*="job-details"]')],
             // Logged-out / guest views.
-            [".show-more-less-html__markup", () => document.querySelector(".show-more-less-html__markup")],
-            [".description__text", () => document.querySelector(".description__text")],
+            [".show-more-less-html__markup", () => deepQuery(".show-more-less-html__markup")],
+            [".description__text", () => deepQuery(".description__text")],
           ]),
           companyName:
             text(document.querySelector(".job-details-jobs-unified-top-card__company-name")) ||
@@ -406,7 +440,7 @@
           `${el.tagName.toLowerCase()}${el.className ? "." + String(el.className).split(/\s+/).slice(0, 2).join(".") : ""}`
         );
       }
-      el = el.parentElement;
+      el = parentOf(el); // hops shadow boundaries too
     }
     console.log(`equiPay: expanded ancestors: ${touched.join(" > ")}`);
     return undos;
