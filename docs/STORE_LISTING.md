@@ -43,7 +43,7 @@ Capture a job posting as PDF evidence and pre-fill the matching New York pay-tra
 
 ## Permission justifications
 
-The dashboard asks for a one-line reason per permission. Copy these verbatim.
+The dashboard gives each API permission its own justification box, but all host permissions share a **single "Host permission justification" field**. Copy the API rows verbatim into their boxes, and paste the combined host block below into the one host field.
 
 | Permission | Justification |
 |---|---|
@@ -51,9 +51,16 @@ The dashboard asks for a one-line reason per permission. Copy these verbatim.
 | `scripting` | Required to inject the capture script on the active job-posting tab and the form-fill script on the complaint form (NYS DOL / NYC CCHR). |
 | `storage` | Required to store the user's claimant profile (set via the Options page) and to pass the generated PDF between the capture and form-fill steps. |
 | `unlimitedStorage` | The generated evidence PDF can exceed Chrome's default 10MB per-item storage quota when the job posting is image-heavy. |
-| Host permission: `https://apps.labor.ny.gov/*` | Required to inject the form-fill script into the programmatically-opened NYS DOL complaint form tab. This site is where NYS complaints are filed. |
-| Host permission: `https://www.nyc.gov/site/cchr/*` | Required to inject the form-fill script into the programmatically-opened NYC Commission on Human Rights report form. Path-scoped to the CCHR section of nyc.gov. This page is where NYC complaints are filed. |
-| Host permission: `https://www1.nyc.gov/site/cchr/*` | Same as above — nyc.gov serves the CCHR form from both the www and www1 hostnames. |
+
+Host permission justification (single field, paste all three lines):
+
+```
+https://apps.labor.ny.gov/* — Required to inject the form-fill script into the programmatically-opened NYS Department of Labor complaint form tab. This site is where NYS complaints are filed.
+
+https://www.nyc.gov/site/cchr/* — Required to inject the form-fill script into the programmatically-opened NYC Commission on Human Rights report form. Deliberately path-scoped to the CCHR section of nyc.gov rather than the whole domain. This page is where NYC complaints are filed.
+
+https://www1.nyc.gov/site/cchr/* — Identical purpose: nyc.gov serves the same CCHR form from both the www and www1 hostnames, so both must be covered for the injection to work after redirects.
+```
 
 (v0.2.0 dropped the `tabs` permission: the worker only touches tabs it created, matched by tab ID, which needs no permission.)
 
