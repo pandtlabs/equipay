@@ -21,7 +21,7 @@ const entries = [
   "options.js",
   "dist/formfill.js",
   "vendor/jspdf.umd.min.js",
-  "vendor/html2canvas.min.js",
+  "vendor/html2canvas-pro.min.js",
   "icons/icon-16.png",
   "icons/icon-48.png",
   "icons/icon-128.png",

@@ -7,28 +7,30 @@ Copy-paste reference for the Chrome Web Store developer dashboard. Keep this fil
 ## Listing basics
 
 - **Extension name:** equiPay
-- **Short description** (132 chars max): *One-click evidence capture + pre-filled pay-transparency-law complaint forms (NY today; more states planned).*
+- **Short description** (132 chars max): *One-click evidence capture + pre-filled pay-transparency complaint forms (NYS DOL & NYC CCHR; more states planned).*
 - **Category:** Workflow & Planning (primary). Fallback: Tools. Don't pick Privacy & Security — that category is reserved for extensions whose core function is privacy/security (VPNs, password managers), not for any extension that happens to be privacy-respecting.
 - **Language:** English
 
 ## Detailed description (dashboard field)
 
 ```
-equiPay helps New York workers and job-seekers file complaints for Pay Transparency Law (§194-b) violations.
+equiPay helps New York workers and job-seekers file complaints for pay-transparency violations.
 
-The law requires most NY employers (4+ employees) to disclose a salary range in every job posting. When they don't, you can file a complaint with the NYS Department of Labor — but gathering evidence and filling out the 40+ field complaint form takes an hour of manual work.
+New York State law (§194-b) and NYC's salary transparency law (Admin. Code § 8-107(32)) require most employers (4+ employees) to disclose a salary range in every job posting. When they don't, you can file a complaint — with the NYS Department of Labor, or with the NYC Commission on Human Rights for jobs based in New York City. But gathering evidence and filling out the complaint forms takes an hour of manual work.
 
 equiPay does that work for you:
 
 • CAPTURE: Click the toolbar icon on any job posting (LinkedIn, Indeed, Glassdoor, Greenhouse, Lever, ZipRecruiter, Monster, Workday, or generic fallback). equiPay saves a clean PDF of the full job description with a timestamped URL header.
 
-• PRE-FILL: equiPay opens the NYS DOL complaint form in a new tab and pre-fills your claimant info, the §194-b checkboxes, a standard explanation of the missing pay range, and attaches the PDF.
+• ROUTE: equiPay detects whether the job is NYC-based and opens the right agency's form — the NYS DOL complaint form or the NYC CCHR discrimination-report form. One click in the review panel switches agencies if the detection guessed wrong.
 
-• REVIEW: Before you submit, a review panel walks you through the §194-b requirements (4+ employees, NY-based or NY-reporting, missing range). Helpers for the employer's registered business address (NY Dept. of State lookup, web search) keep you in control of that step.
+• PRE-FILL: equiPay pre-fills your claimant info, the violation checkboxes, a standard explanation of the missing pay range, and attaches the PDF. Fields that require your judgment (like the CCHR form's legal acknowledgement) are left for you.
+
+• REVIEW: Before you submit, a review panel walks you through the law's requirements (4+ employees, NY/NYC-based job, missing range). Helpers for the employer's registered business address (NY Dept. of State lookup, web search) keep you in control of that step.
 
 equiPay never submits the complaint itself — you review and submit by hand.
 
-COMING SOON: equiPay is built as a per-state adapter registry. Additional states with pay-transparency laws (CA SB 1162, CO Equal Pay for Equal Work Act, WA SHB 1795, IL HB 3129, and others) will be added as their complaint-form flows are mapped. Today the extension supports New York only and remains silent on every other site.
+COMING SOON: equiPay is built as a per-jurisdiction adapter registry. Additional states with pay-transparency laws (CA SB 1162, CO Equal Pay for Equal Work Act, WA SHB 1795, IL HB 3129, and others) will be added as their complaint-form flows are mapped. Today the extension supports New York State and New York City, and remains silent on every other site.
 
 100% local. No analytics, no telemetry, no external servers. Your claimant info stays in chrome.storage.local on your device. Full source code + MIT license: https://github.com/pandtlabs/equipay
 ```
@@ -36,7 +38,7 @@ COMING SOON: equiPay is built as a per-state adapter registry. Additional states
 ## Single-purpose description (required)
 
 ```
-Capture a job posting as PDF evidence and pre-fill the NYS Department of Labor Pay Transparency Law (§194-b) complaint form.
+Capture a job posting as PDF evidence and pre-fill the matching New York pay-transparency complaint form (NYS DOL §194-b, or NYC CCHR § 8-107(32) for NYC-based jobs).
 ```
 
 ## Permission justifications
@@ -46,11 +48,14 @@ The dashboard asks for a one-line reason per permission. Copy these verbatim.
 | Permission | Justification |
 |---|---|
 | `activeTab` | Required to read the job posting on the tab the user clicks equiPay on, so we can extract the employer, job title, and description. |
-| `scripting` | Required to inject the capture script on the active job-posting tab and the form-fill script on the NYS DOL complaint form. |
+| `scripting` | Required to inject the capture script on the active job-posting tab and the form-fill script on the complaint form (NYS DOL / NYC CCHR). |
 | `storage` | Required to store the user's claimant profile (set via the Options page) and to pass the generated PDF between the capture and form-fill steps. |
 | `unlimitedStorage` | The generated evidence PDF can exceed Chrome's default 10MB per-item storage quota when the job posting is image-heavy. |
-| `tabs` | Required to open the NYS DOL complaint form in a new tab after capture and to listen for its load-complete event so the form-fill script runs at the right moment. |
-| Host permission: `https://apps.labor.ny.gov/*` | Required to inject the form-fill script into the programmatically-opened NYS DOL complaint form tab. This site is where the complaint is filed. |
+| Host permission: `https://apps.labor.ny.gov/*` | Required to inject the form-fill script into the programmatically-opened NYS DOL complaint form tab. This site is where NYS complaints are filed. |
+| Host permission: `https://www.nyc.gov/site/cchr/*` | Required to inject the form-fill script into the programmatically-opened NYC Commission on Human Rights report form. Path-scoped to the CCHR section of nyc.gov. This page is where NYC complaints are filed. |
+| Host permission: `https://www1.nyc.gov/site/cchr/*` | Same as above — nyc.gov serves the CCHR form from both the www and www1 hostnames. |
+
+(v0.2.0 dropped the `tabs` permission: the worker only touches tabs it created, matched by tab ID, which needs no permission.)
 
 ## Data usage disclosures (required)
 
@@ -103,13 +108,9 @@ Run `npm run build` first to produce `dist/formfill.js` from the source in `form
 
 ```bash
 cd /path/to/equipay
-npm run build
-zip -r equipay-0.1.0.zip \
-  manifest.json \
-  background.js content.js options.html options.js \
-  dist/formfill.js \
-  vendor/jspdf.umd.min.js vendor/html2canvas.min.js \
-  icons/icon-16.png icons/icon-48.png icons/icon-128.png
+npm run package    # builds + writes equipay-<version>.zip
 ```
+
+The zip includes only: `manifest.json`, `background.js`, `content.js`, `options.html`, `options.js`, `dist/formfill.js`, `vendor/jspdf.umd.min.js`, `vendor/html2canvas-pro.min.js`, and the three PNG icons (see `scripts/package.mjs`).
 
 Verify the zip doesn't include `node_modules/`, `.git/`, `package*.json`, `docs/`, `scripts/`, `formfill/` (the un-bundled source), or `icons/icon.svg`. Those are for development only.

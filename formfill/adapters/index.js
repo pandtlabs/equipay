@@ -1,9 +1,16 @@
 import { nyAdapter } from "./ny.js";
+import { nycAdapter } from "./nyc.js";
 
-// Host → adapter. Add new states by appending entries.
-const BY_HOST = {
-  [nyAdapter.host]: nyAdapter,
-};
+const ADAPTERS = [nyAdapter, nycAdapter];
+
+// Host → adapter. An adapter registers under `hosts` (array) or `host`
+// (single string). Add new states by appending to ADAPTERS.
+const BY_HOST = {};
+for (const adapter of ADAPTERS) {
+  for (const host of adapter.hosts || [adapter.host]) {
+    BY_HOST[host] = adapter;
+  }
+}
 
 export function pickAdapterForHost(host) {
   // Exact host match first
@@ -16,5 +23,5 @@ export function pickAdapterForHost(host) {
 }
 
 export function allAdapters() {
-  return Object.values(BY_HOST);
+  return ADAPTERS;
 }

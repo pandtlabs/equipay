@@ -74,7 +74,7 @@ Also **test the "additional comments" validator by pasting a test string** with 
 
 ## 3. Write the adapter
 
-Create `formfill/adapters/[state-code].js` — copy `ny.js` as a starting scaffold and fill in:
+Create `formfill/adapters/[state-code].js` — copy `ny.js` (JSF/label-matching style) or `nyc.js` (stable-input-name style, the simpler one when the form has readable `name` attributes) as a starting scaffold and fill in:
 
 ```js
 export const caAdapter = {
@@ -157,13 +157,13 @@ Edit `formfill/adapters/index.js`:
 
 ```js
 import { nyAdapter } from "./ny.js";
+import { nycAdapter } from "./nyc.js";
 import { caAdapter } from "./ca.js";    // <- add import
 
-const BY_HOST = {
-  [nyAdapter.host]: nyAdapter,
-  [caAdapter.host]: caAdapter,           // <- add entry
-};
+const ADAPTERS = [nyAdapter, nycAdapter, caAdapter];  // <- add entry
 ```
+
+An adapter can register several hostnames via a `hosts` array (see `nyc.js`, which serves from both `www.nyc.gov` and `www1.nyc.gov`); `host` alone works for the common case.
 
 ## 5. Add the host to `manifest.json`
 
@@ -172,19 +172,22 @@ The background service worker injects `dist/formfill.js` into the newly-opened f
 ```json
 "host_permissions": [
   "https://apps.labor.ny.gov/*",
+  "https://www.nyc.gov/site/cchr/*",
+  "https://www1.nyc.gov/site/cchr/*",
   "https://apps.example.ca.gov/*"        // <- add
 ]
 ```
 
+Prefer path-scoped patterns (like the nyc.gov ones) when the form lives on a big shared domain — narrower grants review faster.
+
 ## 6. Handle the new form URL in `background.js`
 
-**Today this is NY-only.** The service worker hardcodes `NYS_DOL_COMPLAINT_URL` and opens that tab after capture. To support multiple states, you'll need to pick the target URL based on the user's intent. Options:
+The service worker keeps a `FORM_URLS` map keyed by jurisdiction id (`nys`, `nyc`, …). Add your state's form URL there. Then decide how captures route to it:
 
-- Add a **"preferred state" dropdown** to the Options page, default to NY. The background script reads `complainant.state` (or a new `preferredState` field) and opens the matching adapter's `formUrl`.
-- **Infer from the user's mailing-address state** in the claimant profile. Falls back to NY if not set.
-- **Prompt at capture time** via a small popup. More UX, but explicit.
+- **Location-based detection** (how `nyc` vs `nys` works today): `detectJurisdiction()` in `content.js` inspects the posting's listed location and stamps `meta.jurisdiction`; the worker opens `FORM_URLS[meta.jurisdiction]`. Extend the heuristic if your state is detectable from the posting.
+- **User choice**: for a state that can't be inferred, add a "preferred state" dropdown to the Options page and read it in the worker before falling back to detection.
 
-The first option is simplest and is the recommended path. Leave this as a follow-up if you're adding the adapter primarily to prove the architecture works. Document the gap until state selection is wired up.
+Whichever you pick, also consider adding a `switchForm` entry to the relevant adapters' `reviewPanel` config so users can hop to the right agency in one click when routing guesses wrong (the button sends `OPEN_ALTERNATE_FORM` with a jurisdiction id back to the worker).
 
 ## 7. Build, reload, test
 

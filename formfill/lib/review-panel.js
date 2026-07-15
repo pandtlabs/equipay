@@ -89,6 +89,13 @@ export function showReviewPanel({
         </div>
       </div>` : ""}
 
+    ${rp.switchForm ? `
+      <div style="padding:10px 14px;border-bottom:1px solid #eee;">
+        <button data-equipay-action="switchForm"
+                data-equipay-target="${escapeHtml(rp.switchForm.jurisdiction)}"
+                class="equipay-btn">↪ ${escapeHtml(rp.switchForm.label)}</button>
+      </div>` : ""}
+
     ${rp.links && rp.links.length ? `
       <div style="padding:12px 14px;font-size:12px;color:#555;">
         ${rp.links.map((l) => `
@@ -152,24 +159,62 @@ function runPanelAction(btn) {
     case "openUrl":
       window.open(target, "_blank", "noopener");
       break;
+    case "switchForm":
+      // Ask the service worker to open the other jurisdiction's form; the
+      // capture data is still in storage, so it fills the same complaint.
+      try {
+        chrome.runtime.sendMessage({
+          type: "OPEN_ALTERNATE_FORM",
+          jurisdiction: target,
+        });
+      } catch (err) {
+        console.error("equiPay: switch-form message failed", err);
+      }
+      break;
     default:
       console.warn(`equiPay: unknown panel action "${action}"`);
   }
 }
 
-function buildSubstitutions({ meta, company }) {
+function buildSubstitutions({ meta, company, complainant }) {
+  const c = complainant || {};
+  const cityStateZip = [
+    [c.city, c.state].filter(Boolean).join(", "),
+    c.zip,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const ts = meta?.timestamp ? new Date(meta.timestamp) : null;
   return {
     companyName: company,
     jobTitle: meta?.jobTitle || "",
     location: meta?.location || "",
     bareUrl: (meta?.url || "").replace(/^https?:\/\//i, ""),
     url: meta?.url || "",
+    // "Jul 14, 2026" — matches the jQuery-datepicker "M dd, yy" format the
+    // NYC CCHR form uses for its incident-date field.
+    captureDate:
+      ts && !isNaN(ts.getTime())
+        ? ts.toLocaleDateString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+          })
+        : "",
+    complainantFullName: [c.firstName, c.lastName].filter(Boolean).join(" "),
+    complainantEmail: c.email || "",
+    complainantPhone: c.phone || "",
+    complainantAddress: [c.address1, c.address2, cityStateZip]
+      .filter(Boolean)
+      .join(", "),
   };
 }
 
+// Unresolved (missing/empty) placeholders are left in place so callers can
+// detect and drop lines that didn't fully resolve.
 function substitute(template, subs) {
-  return String(template).replace(/\{\{(\w+)\}\}/g, (_, key) =>
-    subs[key] != null ? String(subs[key]) : ""
+  return String(template).replace(/\{\{(\w+)\}\}/g, (whole, key) =>
+    subs[key] != null && String(subs[key]) !== "" ? String(subs[key]) : whole
   );
 }
 

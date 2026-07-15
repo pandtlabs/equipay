@@ -1,6 +1,8 @@
 import { waitFor, sleep } from "./lib/dom.js";
 import {
   fillInputByName,
+  fillTextInputByName,
+  fillSelectByName,
   fillExplanationNearInput,
   findSection,
   fillByLabel,
@@ -46,18 +48,65 @@ import { pickAdapterForHost } from "./adapters/index.js";
   await sleep(adapter.hydrationDelayMs ?? 600);
 
   const dataSources = { meta, complainant };
+  // No company fallback here: an unknown company must leave {{companyName}}
+  // unresolved so template lines referencing it get dropped, not filled with
+  // placeholder prose. (The review panel builds its own subs with a
+  // human-friendly fallback.)
+  const subs = buildSubstitutions({
+    meta,
+    company: meta?.companyName || null,
+    complainant,
+  });
 
   // ——— Text fields ———
+  // A mapping resolves its value from `from` (a data path with `|` fallback
+  // chains) or `template` (a literal with {{substitutions}}), and targets
+  // its input via `inputName` (stable name attribute) or `labels` (label
+  // text, optionally scoped by `section` heading keywords).
   let textAttempted = 0;
   let textFilled = 0;
   for (const m of adapter.textFieldMappings || []) {
-    const value = resolveValue(m.from, dataSources);
+    let value;
+    if (m.template) {
+      const rendered = substitute(m.template, subs).trim();
+      // Skip if any placeholder failed to resolve — never write literal
+      // "{{...}}" into a form field.
+      value = rendered && !/\{\{\w+\}\}/.test(rendered) ? rendered : null;
+    } else {
+      value = resolveValue(m.from, dataSources);
+    }
     if (!value) continue;
     textAttempted++;
-    const scope = m.section ? findSection(m.section) : document;
-    if (fillByLabel(scope, m.labels, value, m.preferTag)) {
+    let filled;
+    if (m.inputName) {
+      filled = fillTextInputByName(m.inputName, value);
+    } else {
+      const scope = m.section ? findSection(m.section) : document;
+      filled = fillByLabel(scope, m.labels, value, m.preferTag);
+    }
+    if (filled) {
       textFilled++;
       await sleep(120);
+    } else {
+      console.log(
+        `equiPay: could not fill text field ${JSON.stringify(m.inputName || m.labels)}`
+      );
+    }
+  }
+
+  // ——— Selects (dropdowns by stable name) ———
+  // Runs before radios/checkboxes: a select's onchange may reveal the
+  // inputs that inputMappings target (e.g. NYC's basis-of-discrimination
+  // checkboxes appear after picking a category).
+  let selectsFilled = 0;
+  for (const m of adapter.selectMappings || []) {
+    if (fillSelectByName(m.name, m.value)) {
+      selectsFilled++;
+      await sleep(400);
+    } else {
+      console.log(
+        `equiPay: could not fill select name=${JSON.stringify(m.name)} value=${JSON.stringify(m.value)}`
+      );
     }
   }
 
@@ -89,14 +138,15 @@ import { pickAdapterForHost } from "./adapters/index.js";
   let commentsFilled = false;
   if (adapter.commentsField) {
     const cf = adapter.commentsField;
-    const subs = buildSubstitutions({ meta, company: meta?.companyName });
     const rendered = (cf.templateLines || [])
       .map((line) => substitute(line, subs))
       .filter((line) => line && !/^\s*$/.test(line) && !/\{\{\w+\}\}/.test(line))
       .join("\n");
     const cleaned = sanitize(cf.sanitizer || "none", rendered);
-    if (fillByLabel(document, cf.labels, cleaned, cf.preferTag)) {
-      commentsFilled = true;
+    if (cf.inputName) {
+      commentsFilled = fillTextInputByName(cf.inputName, cleaned);
+    } else {
+      commentsFilled = fillByLabel(document, cf.labels, cleaned, cf.preferTag);
     }
   }
 
@@ -123,6 +173,7 @@ import { pickAdapterForHost } from "./adapters/index.js";
   console.log(
     `equiPay: adapter=${adapter.id} — ` +
       `text ${textFilled}/${textAttempted}, ` +
+      `selects ${selectsFilled}/${(adapter.selectMappings || []).length}, ` +
       `inputs ${inputsFilled}/${inputsAttempted}, ` +
       `explanations ${explanationsFilled}, ` +
       `comments ${commentsFilled ? "filled" : "missed"}, ` +

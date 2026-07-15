@@ -42,10 +42,22 @@ export function setValue(el, value) {
 }
 
 export function setRadioChecked(input) {
+  if (input.type === "checkbox") {
+    // click() TOGGLES a checkbox, so only click when it's unchecked — the
+    // native click sets the state and fires input/change/onclick itself.
+    if (input.checked) return;
+    input.click?.();
+    if (!input.checked) {
+      input.checked = true;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    return;
+  }
   input.checked = true;
   input.dispatchEvent(new Event("input", { bubbles: true }));
   input.dispatchEvent(new Event("change", { bubbles: true }));
-  input.click?.(); // JSF often wires AJAX to onclick
+  input.click?.(); // clicking a checked radio keeps it selected; JSF often wires AJAX to onclick
 }
 
 // Resolve the visible label text for a given radio/checkbox input,

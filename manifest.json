@@ -1,23 +1,24 @@
 {
   "manifest_version": 3,
   "name": "equiPay",
-  "version": "0.1.1",
-  "description": "Capture job postings as PDF evidence and pre-fill state pay-transparency complaint forms. NY today; more states planned.",
+  "version": "0.2.0",
+  "description": "Capture job postings as PDF evidence and pre-fill pay-transparency complaint forms (NYS DOL, NYC CCHR). More states planned.",
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
-    "tabs",
     "unlimitedStorage"
   ],
   "host_permissions": [
-    "https://apps.labor.ny.gov/*"
+    "https://apps.labor.ny.gov/*",
+    "https://www.nyc.gov/site/cchr/*",
+    "https://www1.nyc.gov/site/cchr/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "equiPay — capture this job posting and open the NYS DOL form",
+    "default_title": "equiPay — capture this job posting and open the pay-transparency complaint form",
     "default_icon": {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",

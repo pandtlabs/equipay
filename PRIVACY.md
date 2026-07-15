@@ -1,8 +1,8 @@
 # equiPay Privacy Policy
 
-_Last updated: April 18, 2026_
+_Last updated: July 14, 2026_
 
-equiPay is an open-source Chrome extension that helps you file New York Pay Transparency Law (§194-b) complaints with the NYS Department of Labor.
+equiPay is an open-source Chrome extension that helps you file New York pay-transparency complaints — with the NYS Department of Labor (§194-b) or, for jobs based in New York City, with the NYC Commission on Human Rights (NYC Admin. Code § 8-107(32)).
 
 ## What data does equiPay collect?
 
@@ -21,22 +21,21 @@ All of this data lives on your computer, inside your Chrome profile. equiPay doe
 
 The extension does open two categories of destination, but only when *you* click the toolbar icon or a button in the review panel:
 
-- **The NYS DOL complaint form** (`apps.labor.ny.gov`) — opened in a new tab so you can review and submit a complaint.
+- **The complaint form** — the NYS DOL form (`apps.labor.ny.gov`) or, for NYC-based jobs, the NYC CCHR report form (`nyc.gov/site/cchr`) — opened in a new tab so you can review and submit a complaint.
 - **Optional lookup helpers** — when you click "NY DOS" or "Web search" in the review panel, equiPay opens those sites in a new tab with the employer's name copied to your clipboard. No data is sent automatically; you search manually.
 
 ## Does equiPay access other websites?
 
-equiPay only runs on a page when you explicitly click its toolbar icon (`activeTab` permission) or when you land on the NYS DOL complaint form tab that the extension itself opened. On the job-posting tab, it reads the posting's DOM to extract the job description, employer, and title; on the DOL tab, it pre-fills form fields using your stored profile and capture data.
+equiPay only runs on a page when you explicitly click its toolbar icon (`activeTab` permission) or when you land on the complaint-form tab (NYS DOL or NYC CCHR) that the extension itself opened. On the job-posting tab, it reads the posting's DOM to extract the job description, employer, and title; on the form tab, it pre-fills form fields using your stored profile and capture data.
 
-equiPay does **not** read your browsing history, other open tabs, form data on non-DOL sites, or any page you have not explicitly activated.
+equiPay does **not** read your browsing history, other open tabs, form data on other sites, or any page you have not explicitly activated.
 
 ## Permissions, in plain language
 
 - `activeTab` — allows the extension to read the tab you clicked on.
 - `scripting` — allows the extension to inject its capture and form-fill scripts.
 - `storage` / `unlimitedStorage` — allows the extension to store your claimant profile and the generated PDF locally.
-- `tabs` — allows the extension to open the NYS DOL complaint form in a new tab.
-- Host permission for `apps.labor.ny.gov` — allows the extension to pre-fill the complaint form on that specific site.
+- Host permissions for `apps.labor.ny.gov` and `nyc.gov/site/cchr` — allow the extension to pre-fill the complaint forms on those specific sites.
 
 ## Open source
 

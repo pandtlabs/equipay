@@ -80,6 +80,10 @@ export const nyAdapter = {
       warning:
         "Only file a complaint if all four apply — false or duplicate reports waste state resources.",
     },
+    switchForm: {
+      label: "NYC employer or NYC-based job? File with the NYC CCHR instead",
+      jurisdiction: "nyc",
+    },
     addressLookup: {
       title: "Business address (manual):",
       description:

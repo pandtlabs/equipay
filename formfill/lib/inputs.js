@@ -28,6 +28,43 @@ export function fillInputByName(name, optionText) {
   return false;
 }
 
+// Fill a text input or textarea targeted by its `name` attribute. Preferred
+// over label matching when the form has stable, unique input names (e.g. the
+// NYC CCHR report form).
+export function fillTextInputByName(name, value) {
+  const el = document.querySelector(
+    `input[name="${CSS.escape(name)}"], textarea[name="${CSS.escape(name)}"]`
+  );
+  if (!el || el.disabled || el.readOnly) return false;
+  const type = (el.type || "").toLowerCase();
+  if (type === "checkbox" || type === "radio" || type === "file" || type === "hidden") {
+    return false;
+  }
+  setValue(el, value);
+  return true;
+}
+
+// Fill a <select> targeted by its `name` attribute, matching the option by
+// its `value` first, then by visible text (case-insensitive). Dispatches the
+// usual events so inline onchange handlers (conditional reveals) fire.
+export function fillSelectByName(name, wantedValue) {
+  const select = document.querySelector(
+    `select[name="${CSS.escape(name)}"]`
+  );
+  if (!select || select.disabled) return false;
+  const wanted = String(wantedValue).trim().toLowerCase();
+  const option =
+    [...select.options].find(
+      (o) => o.value.trim().toLowerCase() === wanted
+    ) ||
+    [...select.options].find(
+      (o) => o.textContent.trim().toLowerCase() === wanted
+    );
+  if (!option) return false;
+  setValue(select, option.value);
+  return true;
+}
+
 // After a conditional-reveal answer, walk up from the anchoring radio
 // looking for a newly-visible, empty textarea and fill it.
 export function fillExplanationNearInput(radioName, text) {
