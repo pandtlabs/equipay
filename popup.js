@@ -42,6 +42,7 @@ async function capture(choiceId) {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       files: [
+        "tt-shim.js", // must precede the vendor libs (Trusted Types fallback)
         "vendor/jspdf.umd.min.js",
         "vendor/html2canvas-pro.min.js",
         "content.js",

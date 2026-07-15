@@ -111,6 +111,6 @@ cd /path/to/equipay
 npm run package    # builds + writes equipay-<version>.zip
 ```
 
-The zip includes only: `manifest.json`, `background.js`, `content.js`, `jurisdictions.js`, `popup.html`, `popup.js`, `options.html`, `options.js`, `dist/formfill.js`, `vendor/jspdf.umd.min.js`, `vendor/html2canvas-pro.min.js`, and the three PNG icons (see `scripts/package.mjs`).
+The zip includes only: `manifest.json`, `background.js`, `content.js`, `tt-shim.js`, `jurisdictions.js`, `popup.html`, `popup.js`, `options.html`, `options.js`, `dist/formfill.js`, `vendor/jspdf.umd.min.js`, `vendor/html2canvas-pro.min.js`, and the three PNG icons (see `scripts/package.mjs`).
 
 Verify the zip doesn't include `node_modules/`, `.git/`, `package*.json`, `docs/`, `scripts/`, `formfill/` (the un-bundled source), or `icons/icon.svg`. Those are for development only.

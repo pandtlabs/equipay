@@ -17,6 +17,7 @@ const entries = [
   "manifest.json",
   "background.js",
   "content.js",
+  "tt-shim.js",
   "jurisdictions.js",
   "popup.html",
   "popup.js",

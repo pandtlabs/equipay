@@ -43,6 +43,35 @@
     );
   }
 
+  // Class-name-independent JD locator: every recent LinkedIn layout heads
+  // the description with "About the job". Walk up from that heading to the
+  // smallest ancestor that holds the full description text, so the capture
+  // stays tight even when we don't recognize any class names.
+  function containerFromAboutHeading() {
+    const heading = [
+      ...document.querySelectorAll("h1, h2, h3, h4, h5, strong"),
+    ].find((el) => /^\s*about the job\s*$/i.test(el.textContent || ""));
+    if (!heading) return null;
+    let el = heading.parentElement;
+    for (let depth = 0; el && depth < 8; depth++, el = el.parentElement) {
+      if ((el.innerText || "").trim().length > 600) return el;
+    }
+    return null;
+  }
+
+  // Resolve the first matching [label, locator] pair and log which strategy
+  // won, so console reports from the field tell us what the DOM looks like.
+  function resolveContainer(strategies) {
+    for (const [label, locate] of strategies) {
+      const el = locate();
+      if (el) {
+        console.log(`equiPay: JD container via ${label}`);
+        return el;
+      }
+    }
+    return null;
+  }
+
   // ——— Per-site parsers ———
   const PARSERS = [
     {
@@ -95,13 +124,21 @@
           return m ? m[1].trim() : null;
         })();
         return {
-          jdContainer:
-            document.querySelector("#job-details") ||
-            document.querySelector(".jobs-description-content__text") ||
-            document.querySelector(".jobs-description__content") ||
-            document.querySelector('[class*="jobs-description"]') ||
-            document.querySelector(".show-more-less-html__markup") ||
-            document.querySelector(".description__text"),
+          jdContainer: resolveContainer([
+            ["#job-details", () => document.querySelector("#job-details")],
+            [".jobs-description-content__text", () => document.querySelector(".jobs-description-content__text")],
+            [".jobs-description__content", () => document.querySelector(".jobs-description__content")],
+            ['[class*="jobs-description"]', () => document.querySelector('[class*="jobs-description"]')],
+            // Class-independent: works on the 2026 /jobs/search-results/
+            // two-pane layout where none of the known classes exist.
+            ["about-the-job heading", containerFromAboutHeading],
+            // Details-pane wrapper — looser than the heading walk, but far
+            // tighter than falling back to <main> (which includes the list).
+            ['[class*="job-details"]', () => document.querySelector('[class*="job-details"]')],
+            // Logged-out / guest views.
+            [".show-more-less-html__markup", () => document.querySelector(".show-more-less-html__markup")],
+            [".description__text", () => document.querySelector(".description__text")],
+          ]),
           companyName:
             text(document.querySelector(".job-details-jobs-unified-top-card__company-name")) ||
             text(document.querySelector(".jobs-unified-top-card__company-name")) ||

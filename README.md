@@ -59,7 +59,7 @@ After editing files:
 
 | If you changed… | Run… | Then… |
 |---|---|---|
-| `background.js`, `content.js`, `popup.*`, `jurisdictions.js`, `options.*`, `manifest.json`, anything in `vendor/` | *(nothing — not bundled)* | `chrome://extensions` → equiPay → ↻, then reload any tab you want to test on |
+| `background.js`, `content.js`, `popup.*`, `jurisdictions.js`, `tt-shim.js`, `options.*`, `manifest.json`, anything in `vendor/` | *(nothing — not bundled)* | `chrome://extensions` → equiPay → ↻, then reload any tab you want to test on |
 | Anything in `formfill/` | `npm run build-formfill` | reload extension + reload the DOL tab |
 | `icons/icon.svg` | `npm run build-icons` | reload extension |
 | `package.json` deps | `npm install` (triggers `sync-lib`) | reload extension |

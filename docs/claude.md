@@ -7,7 +7,7 @@
 MIT License
 
 ## End-to-end flow
-1. User clicks the equiPay toolbar icon on a job posting (LinkedIn, Indeed, Glassdoor, etc.) and picks an agency in the action popup — Auto-detect (default), NYS DOL, or NYC CCHR. The list is driven by `jurisdictions.js` (shared registry); the pick is persisted as `filingChoice` in `chrome.storage.local` and popup.js injects the capture pipeline into the active tab.
+1. User clicks the equiPay toolbar icon on a job posting (LinkedIn, Indeed, Glassdoor, etc.) and picks an agency in the action popup — Auto-detect (default), NYS DOL, or NYC CCHR. The list is driven by `jurisdictions.js` (shared registry); the pick is persisted as `filingChoice` in `chrome.storage.local` and popup.js injects the capture pipeline into the active tab (`tt-shim.js` first, then the vendor libs, then `content.js`).
 2. `content.js` is injected into the posting tab. It identifies the job-description element via a per-site parser, temporarily neutralizes `overflow`/`height` on the JD's scroll ancestors so the content flows into the natural document, and rasterizes the element with `html2canvas`.
 3. The rasterized PNG is composed into a PDF via `jsPDF`: a metadata header (URL, timestamp, employer, job title, listed location) followed by the screenshot paginated across letter-sized pages.
 4. The PDF is saved to the user's Downloads folder (`NYS_Violation_[Company].pdf` / `NYC_Violation_[Company].pdf`) and kept as a base64 data URL so it can be reused later for auto-upload. `content.js` also detects the jurisdiction (`nyc` vs `nys`) from the posting's listed location (borough/NYC keyword heuristic in `detectJurisdiction`, stored as `meta.jurisdictionDetected`); the user's popup pick overrides detection unless it's `auto` (`meta.jurisdiction`).
@@ -32,6 +32,8 @@ MIT License
 - Before rasterizing, `expandScrollAncestors` walks from the JD element up to `<html>`, setting `overflow: visible; height: auto; max-height: none; min-height: 0` on every ancestor that had a scroll/overflow/height constraint, then `html2canvas` renders the JD subtree at its natural `scrollWidth` × `scrollHeight`. A `finally` block restores the originals. This was the crucial fix for LinkedIn's nested-scroll-pane layout, where the JD lives inside an `overflow:auto` pane and normal rendering only captures the visible viewport.
 - `html2canvas-pro` (maintained fork of the unmaintained html2canvas 1.4.1; adds modern CSS color support — `oklch()`, `lab()`, `color-mix()` — that broke capture on LinkedIn's redesign) is configured with `onclone` that strips `background-image`, `list-style-image`, and `<img>` `src` from the cloned subtree. Without this, html2canvas kicks off dozens of subresource fetches (LinkedIn's ad-tracking pixels, icon fonts, etc.) that fail noisily with `ERR_BLOCKED_BY_CLIENT` in the console. Text content — which is what matters for evidence — renders fine without them.
 - PDF composition uses `jsPDF` directly (we do not use `html2pdf.js`, which wraps html2canvas with its own clone-and-render logic that re-introduces the subresource-fetch noise).
+- **Trusted Types** (`tt-shim.js`, injected before the vendor libs): sites like LinkedIn enforce a `trusted-types` policy-name allowlist, which blocks html2canvas-pro's `createPolicy("html2canvas-pro")` even from the isolated world (Chromium checks policy creation against the page CSP — crbug.com/1281028 — while isolated-world DOM sinks follow the extension's CSP). The shim patches `TrustedTypePolicyFactory.prototype.createPolicy` in the isolated world to fall back to a pass-through pseudo-policy when creation throws.
+- **JD-container strategies are instrumented**: the LinkedIn parser logs `equiPay: JD container via <strategy>` so field reports say exactly which selector generation matched. The class-independent strategies (the "About the job" heading walk, the `[class*="job-details"]` pane wrapper) keep captures tight on layouts we've never seen, instead of falling back to rasterizing all of `<main>`.
 
 ### LinkedIn URL normalization
 - LinkedIn postings accumulate long query strings (`currentJobId`, tracking origin, keywords, etc.). The LinkedIn parser emits a canonical `https://www.linkedin.com/jobs/view/{id}/` URL for use in the PDF header and complaint form, keeping the evidence clean.
@@ -65,6 +67,7 @@ MIT License
 | `manifest.json` | MV3 config, permissions, action + options page |
 | `background.js` | Service worker: `CAPTURE_COMPLETE` → open form tab by jurisdiction + inject formfill; `OPEN_ALTERNATE_FORM` → switch agency |
 | `popup.html` / `popup.js` | Action popup: agency picker (sticky `filingChoice`), injects the capture pipeline into the active tab |
+| `tt-shim.js` | Isolated-world Trusted-Types fallback, injected before the vendor libs |
 | `jurisdictions.js` | Shared registry (id, label, form URL) driving the popup list and the worker's `FORM_URLS` |
 | `content.js` | Parser registry, DOM expansion, html2canvas capture, jsPDF composition |
 | `formfill/` (source) + `dist/formfill.js` (built) | State-adapter registry, library helpers, orchestrator; built via esbuild |
